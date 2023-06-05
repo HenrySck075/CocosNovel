@@ -1,2 +1,7 @@
 # CocosNovel
-visual novel in cocos2d real!!!!!!11!!1!!
+
+The most (insert category here) in (where)
+
+# Installation
+
+# Using CocosNovel
