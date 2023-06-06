@@ -1,0 +1,6 @@
+load script_ch0 as ch0_main
+load transforms
+call ch0_main
+
+"Outside ch0_main now"
+"Anyways you don't need to escape any character since file reader already escaped it"
