@@ -2,6 +2,7 @@
 #include "SimpleAudioEngine.h"
 #include "utils.h"
 
+using namespace CocosNovel;
 USING_NS_CC;
 // Print useful error message instead of segfaulting when files are not there.
 static void problemLoading(const char* filename)
@@ -112,9 +113,7 @@ bool NovelPage::init(std::string scriptFile, float delay) {
     {
         return false;
     }
-    
-    script = loadScript("script");
-    cocos2d::log(std::to_string(script.size()).c_str());
+    cocos2d::log(std::to_string(scripts->size()).c_str());
     Director* directorInst = Director::getInstance();
     auto visibleSize = directorInst->getVisibleSize();
     Vec2 origin = directorInst->getVisibleOrigin();
