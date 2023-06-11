@@ -1,12 +1,13 @@
 #include "utils.h"
 #include <regex>
+#include <vector>
 using namespace std;
+using namespace CocosNovel;
 vector<string> tokenize(string s, string del) {
     vector<string> res = {};
     size_t pos = 0;
     while ((pos = s.find(del)) != string::npos) {
         string token = s.substr(0, pos);
-        res.push_back(token);
         s.erase(0, pos + del.length());
     }
     res.push_back(s);
@@ -28,46 +29,52 @@ string printVec(T vec) {
 
     return oss.str();
 }
-cocos2d::Dictionary* loadTransform(string transformBlock) {
+DictionaryExtra* loadTransform(string transformBlock) {
     istringstream stream(transformBlock);
     string cmdl;
+    auto ret = DictionaryExtra::create();
     while (getline(stream, cmdl)) {
         if (cmdl.size() == 0) continue;
-        auto obj = cocos2d::Dictionary::create();
         auto cmd = tokenize(cmdl);
 
         if (cmd[0] == "transform") {
-            auto a = tokenize(cmd[1], "(");
-            cmd[1] = a[0];
-            cmd.insert(cmd.begin() + 2, a[1]);
-            cmd[cmd.size() - 1]= regex_replace(cmd[cmd.size() - 1], regex("):"), "");
+            auto a = DictionaryExtra::create();
+            for (auto& param : vector<std::string>(cmd.begin() + 3, cmd.end())) {
+                auto p = tokenize(param, "=");
+                a->setObjectWithType(p[1], p[0]);
+            }
+            ret->setObjectWithType(a, "attributes");
         }
     }
+    return ret;
 }
-tuple<
-    map<string, vector<map<string, string>>>, // scripts
-    map<string, map<string, vector<map<string, string>>>>// transformations
-> loadScript(string scriptFileName) {
+tuple<DictionaryExtra, DictionaryExtra> loadScript(string scriptFileName) {
 
-    map<string, map<string, map<string, string>>> transforms;
-    map<string, map<string, vector<map<string, string>>>> scripts;
+    DictionaryExtra transforms;
+    DictionaryExtra scripts;
     map<string, string> waitList = { {scriptFileName, "start"} };
     while (!waitList.empty()) {
-        vector<map<string, string>> scriptVect = {};
+        vector<DictionaryExtra> scriptVect;
         istringstream scriptStream(cocos2d::FileUtils::getInstance()->getStringFromFile(cocos2d::FileUtils::getInstance()->fullPathForFilename(waitList.begin()->first + ".novel")));
         string cmdl;
         bool transformProc = false;
         string transformStr = "";
         while (getline(scriptStream, cmdl)) {
             cmdl = regex_replace(cmdl, regex("\r"), "");
-
+            // ignore blank line
             if (cmdl.size() == 0) continue;
-            map<string, string> obj;
+            DictionaryExtra obj;
             auto a = tokenize(cmdl, "\"");
             auto cmd = tokenize(a[0]);
             cocos2d::log(cmd[0].c_str());
-            // image transform
-            if (cmd[0] == "transform") {
+            // top tier interpreter
+            if (false) {
+                //so the code looks reasonable
+            }
+            else if (cmd[0] == "end") {
+                if (cmd[1] == "transform") transformProc = false;
+            }
+            else if (cmd[0] == "transform") {
                 transformProc = true;
             }
             // ignore the comment
@@ -79,32 +86,33 @@ tuple<
             }
             // call the label
             else if (cmd[0] == "call") {
-                obj["command"] = "call";
-                obj["call"] = cmd[1];
+                obj.setObjectWithType("call", "command");
+                obj.setObjectWithType(cmd[1], "call");
             }
             // character alias. DO NOT alias character as "mc" unless the player doesn't appear in the story
             else if (cmd[0] == "alias") {
-                obj["command"] = "alias";
+                obj.setObjectWithType("alias", "command");
                 auto alias = tokenize(cmd[1], "=");
                 cocos2d::log((alias[0] + alias[1]).c_str());
-                obj["aliasTarget"] = alias[0];
-                obj["alias"] = alias[1];
+                obj.setObjectWithType(alias[0], "aliasTarget");
+                obj.setObjectWithType(alias[1], "alias");
             }
             // treat the line as a say statement
             else {
-                obj["command"] = "say";
-                obj["script"] = a[1];
-                obj["character"] = regex_replace(a[0], regex(" "), "");
+                a.push_back("hi");
+                obj.setObjectWithType("say", "command");
+                obj.setObjectWithType(a[1], "script");
+                obj.setObjectWithType(regex_replace(a[0], regex(" "), ""), "character");
             }
-            // wrap the line with double quote if a character is speaking
             if (transformProc) transformStr += cmdl + "\n";
-            if (obj["character"].size() != 0) obj["script"] = "\"" + obj["script"] + "\"";
+            // wrap the line with double quote if a character is speaking
+            if (obj.objectOfType<string>("character").size() != 0) obj.setObjectWithType("\"" + obj.objectOfType<string>("script") + "\"", "script");
             scriptVect.push_back(obj);
         }
         if (!scriptVect.empty()) {
-            scripts[waitList.begin()->second] = scriptVect;
+            scripts.setObjectWithType(scriptVect, waitList.begin()->second);
             waitList.erase(waitList.begin());
         };
     }
-    return scripts;
-}
+    return make_tuple(scripts, transforms);
+};

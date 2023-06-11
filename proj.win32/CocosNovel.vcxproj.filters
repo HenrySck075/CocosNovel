@@ -27,6 +27,9 @@
     <ClCompile Include="..\Classes\utils.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="..\Classes\DictExtra.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="main.h">
@@ -41,10 +44,10 @@
     <ClInclude Include="..\Classes\NovelPage.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\Classes\scripts.h">
+    <ClInclude Include="..\Classes\utils.h">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="..\Classes\utils.h">
+    <ClInclude Include="..\Classes\DictExtra.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

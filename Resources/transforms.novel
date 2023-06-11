@@ -1,4 +1,4 @@
-transform tcommon(x=640, z=0.80):
+transform tcommon attr x=640 z=0.80
     yanchor 1.0
     on show:
         ypos 1.03
