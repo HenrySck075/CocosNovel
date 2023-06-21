@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <any>
 #include <variant>
 #include <iostream>
 #include <sstream>
@@ -15,6 +16,13 @@
 std::vector<std::string> tokenize(std::string s, std::string del = " ");
 
 namespace CocosNovel {
+	struct Setting {
+		std::string normalSpriteFile;
+		std::string hoverSpriteFile;
+		std::string hoverSfxFile;
+	} Settings;
+	// idk if you even need this
+	bool applySetting(std::string name, std::string value);
 	// script interpreter or smth
-	std::tuple<DictionaryExtra, DictionaryExtra> loadScript(std::string script);
+	std::tuple<DictionaryExtra*, DictionaryExtra*> loadScript(std::string script);
 }

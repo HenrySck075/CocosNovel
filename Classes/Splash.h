@@ -10,5 +10,18 @@ namespace CocosNovel {
 		bool init();
 
 		bool setup();
+	private:
+		cocos2d::Menu* menu;
+		CocosNovel::MenuItemHoverSprite* playBtn;
+		CocosNovel::MenuItemHoverSprite* continueBtn;
+		CocosNovel::MenuItemHoverSprite* historyBtn;
+		CocosNovel::MenuItemHoverSprite* settingsBtn;
+		CocosNovel::MenuItemHoverSprite* quitBtn;
+	protected:
+		void onPlayBtn(Ref*){
+			auto scene = cocos2d::Scene::create();
+			scene->addChild(NovelPage::create());
+			Director::getInstance()->pushScene(scene);
+		}
 	};
 }

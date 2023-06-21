@@ -1,7 +1,7 @@
 #include "NovelPage.h"
 #include "SimpleAudioEngine.h"
 #include "utils.h"
-
+#include "macros.h"
 using namespace CocosNovel;
 USING_NS_CC;
 // Print useful error message instead of segfaulting when files are not there.
@@ -23,7 +23,7 @@ bool NovelTextbox::init() {
     namebox->setPosition(-291, a.height / 2+15);
     namebox->setZOrder(-2);
     //ccMenuCallback die = [](Ref* ref) {};
-    //auto hoverBtn = MenuItemHoverSprite::create(Sprite::create("choice_idle_background.png"), Sprite::create("choice_hover_background.png"), nullptr, die);
+    //auto hoverBtn = MenuItemHoverSprite::create(Sprite::create("choice_idle.png"), Sprite::create("choice_hover.png"), nullptr, die);
     //hoverBtn->setPosition(Vec2(visibleSize.width / 2 + origin.x, visibleSize.height / 2 + origin.y+50));
     this->addChild(textbox);
     this->addChild(namebox);
@@ -113,13 +113,13 @@ bool NovelPage::init(std::string scriptFile, float delay) {
     {
         return false;
     }
-    cocos2d::log(std::to_string(scripts->size()).c_str());
+    cocos2d::log(std::to_string(scripts->count()).c_str());
     Director* directorInst = Director::getInstance();
     auto visibleSize = directorInst->getVisibleSize();
     Vec2 origin = directorInst->getVisibleOrigin();
     textbox->setPosition(visibleSize.width / 2, 120);
     this->addChild(textbox);
-    auto h = MenuItemHoverSprite::create(Sprite::create("choice_idle_background.png"), Sprite::create("choice_hover_background.png"), nullptr, "sfx/hover.wav");
+    auto h = MenuItemHoverSprite::create(Sprite::create("choice_idle.png"), Sprite::create("choice_hover.png"), nullptr, "sfx/hover.wav", emptyCallback(Ref*));
     h->setPosition(visibleSize / 2);
     this->addChild(h);
     buttons.push_back(h);
@@ -159,7 +159,7 @@ bool NovelPage::nonBlocking(EventMouse*e) {
     return true;
 }
 void NovelPage::onMouseDown(EventMouse* event) {
-    if (currInstruct[currInstructName] > script[currInstructName].size()-1) {
+    if (currInstruct[currInstructName] > getDEObj(this->scripts, currInstructName, std::vector<DictionaryExtra*>).size()-1) {
         callHistory.pop_back();
         currInstruct.erase(currInstructName);
         if (callHistory.size() == 0) {
@@ -197,26 +197,77 @@ void NovelPage::onMouseDown(EventMouse* event) {
         textbox->setVisible(!textbox->isVisible());
     }
 }
-#define current script[currInstructName][currInstruct[currInstructName]]
+ActionInterval* actionWithEasing(std::string easing, ActionInterval* action) {
+    ActionInterval* easeaction;
+    if (easing == "easein") easeaction = EaseIn::create(action, 0);
+    if (easing == "easeout") easeaction = EaseOut::create(action, 0);
+    else easeaction = action;
+    return easeaction;
+}
+Vector<FiniteTimeAction*> NovelPage::createTransforms(std::string transformName, Node* node) {
+    auto attributes = getDEObj(transform, "attributes", DictionaryExtra*);
+    auto transformList = getDEObj(transform, "defaultTf", std::vector<std::vector<std::string>>);
+    auto showTf = getDEObj(transform, "showTf", std::vector<std::vector<std::string>>);
+    auto replaceTf = getDEObj(transform, "replaceTf", std::vector<std::vector<std::string>>);
+    Vector<FiniteTimeAction*> actions;
+    std::string currentEasing = nullptr;
+    float easingTime = 0;
+
+    bool nodeAlreadyShown = false;
+    if (node->getParent() != nullptr) nodeAlreadyShown = true;
+
+    if (!nodeAlreadyShown) transformList.insert(transformList.end(), showTf.begin(), showTf.end());
+    else transformList.insert(transformList.end(), replaceTf.begin(), replaceTf.end());
+
+    for (auto& t : transformList) {
+        //easing
+        if (t[0] == "easein") {
+            currentEasing = t[0];
+            easingTime = std::stof(t[1]);
+        };
+
+        if (t[0] == "easeend") currentEasing = nullptr;
+        if (t[0] == "xanchor") actions.pushBack(CallFunc::create([node,t](){ 
+            node->setAnchorPoint(Vec2(
+                std::stof(t[1]), node->getAnchorPoint().y)
+            );
+        }));
+        if (t[0] == "yanchor") actions.pushBack(CallFunc::create([node,t](){ 
+            node->setAnchorPoint(Vec2(
+                node->getAnchorPoint().x, std::stof(t[1]))
+            );
+        }));
+        if (t[0] == "xpos") actions.pushBack(actionWithEasing(currentEasing, MoveTo::create(easingTime,Vec2(std::stof(t[1]),node->getPositionY()))));
+        if (t[0] == "ypos") actions.pushBack(actionWithEasing(currentEasing, MoveTo::create(easingTime,Vec2(node->getPositionX(),std::stof(t[1])))));
+        
+        if (t[0] == "alpha") actions.pushBack(actionWithEasing(currentEasing, FadeTo::create(easingTime, std::stof(t[1]))));
+    };
+
+    node->runAction(Sequence::create(actions));
+
+};
+
 void NovelPage::a() {
     // one more check since if we ended a script, it'll increase the index of the caller
     // and pull out the "vector subscript out of range" error if there's no more script in it
-    if (currInstruct[currInstructName] > script[currInstructName].size() - 1) onEndScript(); 
-    while (current["command"] != "say") {
-        if (current["command"] == "alias") {
-            characterAlias[current["alias"]] = current["aliasTarget"];
+    if (currInstruct[currInstructName] > getDEObj(scripts, currInstructName, std::vector<DictionaryExtra*>).size() - 1) onEndScript(); 
+    while (novelParam("command") != "say") {
+        if (novelParam("command") == "alias") {
+            characterAlias[novelParam("alias")] = novelParam("aliasTarget");
         }
-        if (current["command"] == "call") {
-            callHistory.push_back(current["call"]);
-            currInstructName = current["call"];
+        if (novelParam("command") == "call") {
+            callHistory.push_back(novelParam("call"));
+            currInstructName = novelParam("call");
 
             continue; // to prevent increasing the instruction index (below)
+        }
+        if (novelParam("command") == "transform") {
+            
         }
         currInstruct[currInstructName]+=1;
     };
     reading = true;
-    current;
-    textbox->loadLine(current["script"], characterAlias[current["character"]], textSpeed);
+    textbox->loadLine(novelParam("script"), characterAlias[novelParam("character")], textSpeed);
     currInstruct[currInstructName]+=1;
 }
 

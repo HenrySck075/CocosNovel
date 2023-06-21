@@ -1,26 +1,15 @@
 # CocosNovel
 
-Visual novel ~~engine~~ library for Cocos2dx 3.17.2 or smth
-
+The most (insert category here) in (where)
 
 # Installation
-nein
 
-# Usage
-
+# Using CocosNovel
 ## Scripting
-the syntax is similar with ren'py, just with unreasonable syntax and no indentation, see [section nonexist](https://github.com/HenrySck075/CocosNovel/blob/main/Classes/utils.cpp#LL51C33-L51C33) for more detail
 
-## Modifying UI
-uhh either just
-```
-namespace CocosNovel {
-    class NovelTextbox {
-        ...
-    }
-}
-```
-or if you like me dont think it will work then modify the entire source code directly idk
+The syntax is, uhh, similar to Ren'Py (if i didnt say that all complex syntax are literally renpy syntax)
 
-# honorable mention
-Test resources from DDLC (you know what i'll do when this is done)
+# The fucking large TODO list (update over time)
+- Transformation
+- Show statement
+- take a nap

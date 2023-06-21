@@ -49,10 +49,20 @@ endif()
 # add cross-platforms source files and header files 
 # end-user message: you are dumb wtf
 list(APPEND GAME_SOURCE
-     Classes/*.cpp
+     Classes/AppDelegate.cpp
+     Classes/Buttons.cpp
+     Classes/DictExtra.cpp
+     Classes/NovelPage.cpp
+     Classes/Splash.cpp
+     Classes/utils.cpp
      )
 list(APPEND GAME_HEADER
-     Classes/*.h
+    Classes/AppDelegate.h
+    Classes/Buttons.h
+    Classes/DictExtra.h
+    Classes/NovelPage.h
+    Classes/Splash.h
+    Classes/utils.h
      )
 
 if(ANDROID)
