@@ -1,3 +1,9 @@
+hey guys it is me in the future
+
+after remembering this i think it's better to just rewrite renpy in cpp instead of making this
+
+so yeah uhh
+
 # CocosNovel
 
 The most (insert category here) in (where)
